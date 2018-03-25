@@ -13,6 +13,11 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        flavorDimensions "1.0"
+        // Enabling multidex support.
+        multiDexEnabled true
+
+        manifestPlaceholders = [UMENG_CHANNEL_VALUE: "main"]
     }
     buildTypes {
         release {
@@ -20,14 +25,88 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    signingConfigs {
+        debug {
+            keyAlias 'debug'
+            keyPassword '11111111'
+            storeFile file('/src/keystore/debug.jks')
+            storePassword '11111111'
+        }
+        release {
+            keyAlias 'release'
+            keyPassword '11111111'
+            storeFile file('/src/keystore/release.jks')
+            storePassword '11111111'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    //定义的所有渠道
+    productFlavors {
+        main {      //主站
+//            manifestPlaceholders =[UMENG_CHANNEL_VALUE: "main"]
+        }
+        tencent {  //腾讯应用包
+//            manifestPlaceholders =[UMENG_CHANNEL_VALUE: "tencent"]
+        }
+
+        //需要将项目中string 的app_name注释，打包生成的应用名称为aaaa.apk ,用于测试不同功能
+//        launcher{
+//            applicationIdSuffix "user"
+//            resValue "string", "app_name", "user"
+//        }
+
+    }
+
+    //遍历替换清单文件中的渠道名称
+    productFlavors.all { flavor ->
+        flavor.manifestPlaceholders = [UMENG_CHANNEL_VALUE: name]
+    }
+
+    //   gradle 3.0及之后用如下配置更改渠道文件名
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "${variant.productFlavors[0].name}_test.apk"
+        }
+    }
+
+    //   gradle 3.0之前用如下配置更改渠道文件名
+//    applicationVariants.all { variant ->
+//        variant.outputs.each { output ->
+//            def outputFile = output.outputFile
+//            if (outputFile != null && outputFile.name.endsWith('.apk')) {
+//                def fileName = "${variant.productFlavors[0].name}_test.apk"
+////                def fileName = outputFile.name.replace(".apk", "-${defaultConfig.versionName}.apk")
+//                output.outputFile = new File(outputFile.parent, fileName)
+//            }
+//        }
+//    }
+
+
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation"org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
     implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+
+    compile 'com.umeng.sdk:common:latest.integration'
+    compile 'com.umeng.sdk:analytics:latest.integration'
 }
